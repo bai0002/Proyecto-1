@@ -2,9 +2,9 @@ name: Auto Tag on Merge to Main (Windows)
 
 on:
   pull_request:
-    types: [closed]          # Se dispara cuando se cierra un PR
+    types: [closed]       # Se dispara cuando un PR se cierra
     branches:
-      - Main                 # Solo PRs hacia Main
+      - Main              # Solo PRs hacia Main
 
 jobs:
   create_tag:
@@ -16,17 +16,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0    # Necesario para acceder a todos los tags
 
-      # 2️⃣ Obtener el último tag o usar v0.0.0 si no hay
+      # 2️⃣ Obtener el último tag o usar v0.0.0 si no hay ninguno
       - name: Get latest tag
         id: get_tag
         shell: pwsh
         run: |
-          try {
-              $latest_tag = git describe --tags --abbrev=0
-          } catch {
+          $tags = git tag | Sort-Object
+          if ($tags.Count -eq 0) {
               $latest_tag = "v0.0.0"
+          } else {
+              $latest_tag = $tags[-1]
           }
           Write-Output "latest_tag=$latest_tag" | Out-File -Encoding ASCII $env:GITHUB_OUTPUT -Append
 
@@ -52,6 +53,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag $env:NEW_TAG
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git $env:NEW_TAG
+          git push origin $env:NEW_TAG
+
         env:
           NEW_TAG: ${{ steps.bump_version.outputs.new_tag }}
