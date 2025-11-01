@@ -1,0 +1,57 @@
+name: Auto Tag on Merge to Main (Windows)
+
+on:
+  pull_request:
+    types: [closed]          # Se dispara cuando se cierra un PR
+    branches:
+      - Main                 # Solo PRs hacia Main
+
+jobs:
+  create_tag:
+    if: github.event.pull_request.merged == true
+    runs-on: windows-latest
+
+    steps:
+      # 1️⃣ Clonar el repositorio con todo el historial
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2️⃣ Obtener el último tag o usar v0.0.0 si no hay
+      - name: Get latest tag
+        id: get_tag
+        shell: pwsh
+        run: |
+          try {
+              $latest_tag = git describe --tags --abbrev=0
+          } catch {
+              $latest_tag = "v0.0.0"
+          }
+          Write-Output "latest_tag=$latest_tag" | Out-File -Encoding ASCII $env:GITHUB_OUTPUT -Append
+
+      # 3️⃣ Incrementar patch y generar nuevo tag
+      - name: Bump version
+        id: bump_version
+        shell: pwsh
+        run: |
+          $version = $env:LATEST_TAG.Substring(1)  # Quitar "v"
+          $parts = $version.Split('.')
+          $major = [int]$parts[0]
+          $minor = [int]$parts[1]
+          $patch = [int]$parts[2] + 1
+          $new_tag = "v$major.$minor.$patch"
+          Write-Output "new_tag=$new_tag" | Out-File -Encoding ASCII $env:GITHUB_OUTPUT -Append
+        env:
+          LATEST_TAG: ${{ steps.get_tag.outputs.latest_tag }}
+
+      # 4️⃣ Crear y subir el tag al repositorio
+      - name: Create and push tag
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag $env:NEW_TAG
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git $env:NEW_TAG
+        env:
+          NEW_TAG: ${{ steps.bump_version.outputs.new_tag }}
