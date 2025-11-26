@@ -1,0 +1,49 @@
+
+services:
+  # ======================================
+  # Contenedor de la primera aplicación
+  # ======================================
+  bogdan:
+    build: ./bai0002                # Construye la imagen desde ./app1
+    container_name: bai0002         # Nombre del contenedor
+    expose:
+      - "8081"                   # Expone el puerto 8081 solo dentro de la red de Docker
+
+  # ======================================
+  # Contenedor de la segunda aplicación
+  # ======================================
+  cesar:
+    build: ./ccb0016
+    container_name: ccb0016
+    expose:
+      - "8081"
+
+  # ======================================
+  # Contenedor de la tercera aplicación
+  # ======================================
+  pilar:
+    build: ./pml0015
+    container_name: pml0015
+    expose:
+      - "8081"
+
+  # ======================================
+  # Contenedor de la cuarta aplicación
+  # ======================================
+  sergio:
+    build: ./sjp0005
+    container_name: sjp0005
+    expose:
+      - "8081"
+
+  # ======================================
+  # Contenedor de Nginx (Reverse Proxy)
+  # ======================================
+  nginx:
+    image: nginx:latest
+    container_name: reverse-proxy
+    ports:
+      - "8081:80"                # Mapea el puerto 80 del contenedor al 8081 del host
+    volumes:
+      - ./nginx:/etc/nginx:ro   # Monta la configuración de Nginx desde ./nginx
+   
