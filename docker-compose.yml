@@ -7,11 +7,14 @@ services:
   bogdan:
     build: ./bai0002
     container_name: bai0002
+    environment:
+      - LOGIN_USER=${LOGIN_USER}
+      - LOGIN_PASS=${LOGIN_PASS}
+      - SECRET2=${SECRET2}
     ports:
       - "8082:8081"   # host:contenedor
-    environment:
-      - LOGIN_USER=${SECRET1}      # usuario/login
-      - YOUTUBE_URL=${SECRET2}     # URL de YouTube
+    networks:
+      - app-network
 
   # ======================================
   # APP 2 - ccb0016
@@ -21,6 +24,8 @@ services:
     container_name: ccb0016
     ports:
       - "8083:8081"
+    networks:
+      - app-network
 
   # ======================================
   # APP 3 - pml0015
@@ -30,6 +35,8 @@ services:
     container_name: pml0015
     ports:
       - "8084:8081"
+    networks:
+      - app-network
 
   # ======================================
   # APP 4 - sjp0005
@@ -39,6 +46,8 @@ services:
     container_name: sjp0005
     ports:
       - "8085:8081"
+    networks:
+      - app-network
 
   # ======================================
   # NGINX (Reverse Proxy)
@@ -47,7 +56,7 @@ services:
     image: nginx:latest
     container_name: reverse-proxy
     ports:
-      - "8081:80"
+      - "8081:80"  # host → Nginx
     volumes:
       - ./nginx:/etc/nginx:ro
     depends_on:
@@ -55,3 +64,12 @@ services:
       - cesar
       - pilar
       - sergio
+    networks:
+      - app-network
+
+# ======================================
+# Red interna para que Nginx acceda a los contenedores
+# ======================================
+networks:
+  app-network:
+    driver: bridge
