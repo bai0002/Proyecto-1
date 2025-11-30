@@ -2,25 +2,18 @@ from flask import Flask, render_template_string, request, redirect, session, url
 import os
 
 app = Flask(__name__)
-app.secret_key = "cambia_esto"  # seguimos sin FLASK_SECRET_KEY
+app.secret_key = "cambia_esto"
 
-# --------------------------
-# Datos de login y "secreto"
-# --------------------------
-USERNAME = os.environ.get("SECRET1", "admin")  # usuario desde secret
-PASSWORD = "admin"                             # contraseña fija
-SECRET_MESSAGE = os.environ.get("SECRET2", "este es tu secreto")  # secreto que se mostrará
+USERNAME = os.environ.get("LOGIN_USER", "").strip()
+PASSWORD = os.environ.get("LOGIN_PASS", "").strip()
+SECRET_MESSAGE = os.environ.get("SECRET2", "").strip()
 
-# ====================================================
-# LOGIN
-# ====================================================
 @app.route('/login', methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        user = request.form.get("username")
-        pwd = request.form.get("password")
+        user = request.form.get("username", "").strip()
+        pwd = request.form.get("password", "").strip()
 
-        # validar usuario y contraseña
         if user == USERNAME and pwd == PASSWORD:
             session["logged"] = True
             return redirect(url_for('index'))
@@ -42,17 +35,11 @@ def login():
     """
     return render_template_string(html)
 
-# ====================================================
-# LOGOUT
-# ====================================================
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# ====================================================
-# PÁGINA PRINCIPAL PROTEGIDA
-# ====================================================
 @app.route('/')
 def index():
     if not session.get("logged"):
@@ -82,9 +69,6 @@ def index():
         logout_url=url_for('logout')
     )
 
-# ====================================================
-# RUTA QUE MUESTRA EL SECRETO
-# ====================================================
 @app.route('/secret', methods=["POST"])
 def show_secret():
     if not session.get("logged"):
@@ -103,8 +87,5 @@ def show_secret():
     """
     return html
 
-# ====================================================
-# EJECUCIÓN FLASK
-# ====================================================
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8081)
